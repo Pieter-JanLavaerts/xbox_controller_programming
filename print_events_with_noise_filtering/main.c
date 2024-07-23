@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define PAST_N 10 // size of past event array
+#define PAST_N 13 // size of past event array
 
 //function to check if e is in pastea
 int in(struct js_event pastea[], struct js_event e) { 
@@ -36,6 +36,10 @@ int is_button_release(struct js_event e) {
     return e.value == 0;
 }
 
+int is_arrow(struct js_event e) { 
+    return e.type == 6 || e.type == 7;
+}
+
 int main() {
     int fd = open("/dev/input/js0", O_RDONLY);
 
@@ -52,11 +56,14 @@ int main() {
     while (1) {
         read(fd, &e, sizeof(e));
 
-        if (is_button_press(e)) { 
+        if (is_button_release(e)) { 
+            // don't print button releases (too many)
             printe(e);
-        } else if (is_button_release(e)) { 
+        } else if (is_button_press(e) || is_arrow(e)) { 
+            // always print button presses and arrows
             continue;
         } else {
+            // for analog stuff use the pastea to reduce noise
             if (!in(pastea, e)) {
                 pastea[pasti].value = e.value;
                 pastea[pasti].type = e.type;
